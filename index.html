@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wolf Constructions — ContentHub | Hipe Media</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --green:#59ff00; --lgreen:#95ff77; --bg:#0e1110; --panel:#171b1a; --panel2:#1d2221;
+    --border:#2a302e; --text:#eaf0ee; --muted:#8b9491;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .accent-bar{height:3px;background:linear-gradient(90deg,var(--green),var(--lgreen),var(--green));position:fixed;top:0;left:0;right:0;z-index:50}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:#0b0e0d}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:38px;height:38px;border-radius:9px;background:var(--green);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+  .brand h1{font-size:18px;font-weight:700;letter-spacing:-.3px}
+  .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
+  .live{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--green);border:1px solid var(--border);border-radius:20px;padding:6px 14px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .wrap{max-width:1200px;margin:0 auto;padding:32px 24px 80px}
+  .sync{display:flex;align-items:center;gap:12px;background:rgba(89,255,0,.06);border:1px solid rgba(89,255,0,.18);border-radius:12px;padding:14px 18px;margin-bottom:28px;font-size:13px;color:var(--muted)}
+  .sync b{color:var(--text)}
+  .title{font-size:48px;font-weight:700;letter-spacing:-1.5px;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:28px}
+  .sub .g{color:var(--green)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:36px}
+  .card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:22px;position:relative;overflow:hidden}
+  .card .lab{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;font-weight:600}
+  .card .val{font-size:40px;font-weight:700;letter-spacing:-1px;line-height:1}
+  .card.green .val{color:var(--green)}
+  .card .sub2{font-size:12px;color:var(--muted);margin-top:8px}
+  .sec{font-size:18px;font-weight:600;margin:0 0 16px;display:flex;align-items:center;gap:10px}
+  .sec::before{content:'';width:22px;height:3px;background:var(--green);border-radius:2px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:28px}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--border)}
+  td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(89,255,0,.03)}
+  .rank{color:var(--green);font-weight:700}
+  .cap{max-width:520px;color:var(--text)}
+  .meta{color:var(--muted);font-size:12px}
+  .er{color:var(--green);font-weight:700}
+  a{color:var(--green);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(89,255,0,.12);color:var(--green);text-transform:uppercase;letter-spacing:.5px}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:40px;border-top:1px solid var(--border)}
+  .loading{text-align:center;padding:80px;color:var(--muted)}
+  @media(max-width:600px){.title{font-size:34px}.wrap{padding:20px 14px 60px}}
+</style>
+</head>
+<body>
+<div class="accent-bar"></div>
+<header>
+  <div class="brand">
+    <div class="logo">H</div>
+    <div><h1>Content<span style="color:var(--green)">Hub</span></h1><small>by Hipe Media</small></div>
+  </div>
+  <div class="live"><span class="dot"></span> LIVE</div>
+</header>
+
+<div class="wrap" id="root">
+  <div class="loading">Loading live Wolf Constructions data…</div>
+</div>
+
+<footer>Powered by Hipe Media ContentHub · Live from Publer · Auto-refreshes every 5 minutes · info@hipemedia.com.au</footer>
+
+<script>
+const fmt = n => (n==null?'—':Number(n).toLocaleString());
+const days = (iso) => (Date.now()-new Date(iso).getTime())/86400000;
+
+async function load(){
+  let data;
+  try{ const r = await fetch('/api/data'); data = await r.json(); }
+  catch(e){ document.getElementById('root').innerHTML='<div class="loading">Could not load data. Try again shortly.</div>'; return; }
+  const c = data.client || {};
+  const a = c.account || {};
+  const media = (c.recentMedia || []).slice().sort((x,y)=> new Date(y.timestamp)-new Date(x.timestamp));
+  const followers = a.followersCount || 0;
+  const last30 = media.filter(m => days(m.timestamp) <= 30);
+  const eng = m => (m.likeCount||0)+(m.commentsCount||0);
+  const engTotal = last30.reduce((s,m)=>s+eng(m),0);
+  const erAvg = last30.length && followers ? (last30.reduce((s,m)=>s+eng(m)/followers*100,0)/last30.length) : 0;
+
+  // KPI cards
+  const cards = [
+    {lab:'Followers', val:fmt(followers), sub:'@'+(a.username||'wolfconstructionsqld'), green:false},
+    {lab:'Posts (30d)', val:fmt(last30.length), sub:fmt(a.mediaCount)+' lifetime', green:false},
+    {lab:'Engagement Rate', val:erAvg.toFixed(2)+'%', sub:'avg per post (30d)', green:true},
+    {lab:'Engagements (30d)', val:fmt(engTotal), sub:'likes + comments', green:false},
+  ];
+
+  // chart: engagement by recent post (last 12, chronological)
+  const chartPosts = last30.slice(0,12).reverse();
+  const labels = chartPosts.map(m=>new Date(m.timestamp).toLocaleDateString('en-AU',{day:'2-digit',month:'short'}));
+  const vals = chartPosts.map(eng);
+
+  // top posts
+  const top = media.slice().sort((x,y)=>eng(y)-eng(x)).slice(0,10);
+  const rows = top.map((m,i)=>`<tr>
+    <td class="rank">${i+1}</td>
+    <td><span class="badge">${m.mediaType||''}</span></td>
+    <td class="cap">${(m.caption||'').replace(/</g,'&lt;').slice(0,90)}${(m.caption||'').length>90?'…':''}<div class="meta">${new Date(m.timestamp).toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'})}</div></td>
+    <td>${fmt(m.likeCount)}</td>
+    <td>${fmt(m.commentsCount)}</td>
+    <td class="er">${followers?((eng(m)/followers*100).toFixed(1)+'%'):'—'}</td>
+    <td>${m.permalink?'<a href="'+m.permalink+'" target="_blank" rel="noopener">View</a>':''}</td>
+  </tr>`).join('');
+
+  const synced = data.generatedAt ? new Date(data.generatedAt).toLocaleString('en-AU') : 'just now';
+
+  document.getElementById('root').innerHTML = `
+    <div class="sync"><span style="color:var(--green);font-size:16px">↻</span> <b>Live data</b> · synced ${synced} · source: Publer via ContentHub</div>
+    <div class="title">Wolf Constructions</div>
+    <div class="sub"><span class="g">●</span> @${a.username||'wolfconstructionsqld'} · Instagram Business · last 30 days</div>
+    <div class="cards">${cards.map(c=>`<div class="card ${c.green?'green':''}"><div class="lab">${c.lab}</div><div class="val">${c.val}</div><div class="sub2">${c.sub}</div></div>`).join('')}</div>
+    <h2 class="sec">Engagement by post</h2>
+    <div class="panel"><canvas id="chart" height="110"></canvas></div>
+    <h2 class="sec">Top performing posts</h2>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <table><thead><tr><th>#</th><th>Type</th><th>Post</th><th>Likes</th><th>Comments</th><th>ER</th><th>Link</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>`;
+
+  const ctx = document.getElementById('chart');
+  new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Engagements',data:vals,backgroundColor:'#59ff00',borderRadius:6}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8b9491'},grid:{display:false}},y:{ticks:{color:'#8b9491'},grid:{color:'#2a302e'}}}}});
+}
+load();
+setInterval(load, 300000); // refresh every 5 min
+</script>
+</body>
+</html>
